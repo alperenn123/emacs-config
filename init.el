@@ -1,279 +1,126 @@
-;; Hide UI
-(setq inhibit-startup-screen t)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(set-fringe-mode 10)
-(setq visible-bell t)
-(menu-bar-mode -1)
-
-;; Make ESC quit prompts
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
-;; set font
-(set-face-attribute 'default nil :font "Fira Code Retina" :height 130)
-
-;; Performance tweaking for modern machines
-(setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 1024 1024))
-
-;; Better default modes
-(electric-pair-mode t)
-(show-paren-mode 1)
-(setq-default indent-tabs-mode nil)
-(save-place-mode t)
-(savehist-mode t)
-(recentf-mode t)
-(global-auto-revert-mode t)
-;; Better default settings
-(require 'uniquify)
-(setq uniquify-buffer-name-style 'forward
-      window-resize-pixelwise t
-      frame-resize-pixelwise t
-      load-prefer-newer t
-      backup-by-copying t
-      custom-file (expand-file-name "custom.el" user-emacs-directory))
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-
-;; Set up package.el to work with MELPA
 (require 'package)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
+;; Add MELPA and initialize package manager
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
-;; Refresh package archives (GNU Elpa)
-(unless package-archive-contents
-  (package-refresh-contents))
 
+;; Basic UI and behavior settings
+(setq inhibit-startup-message t)         ;; Hide startup message
+(tool-bar-mode -1)                       ;; Disable tool bar
+(scroll-bar-mode -1)                     ;; Disable scroll bar
+(menu-bar-mode -1)                       ;; Disable menu bar
+(show-paren-mode 1)                      ;; Highlight matching parentheses
+(column-number-mode 1)                   ;; Show column numbers
+(global-display-line-numbers-mode t)     ;; Enable line numbers globally
+(setq visible-bell t)                    ;; Use visible bell instead of sound
+(add-to-list 'default-frame-alist '(fullscreen . maximized)) ;; Maximize on startup
+
+;; Package management with `use-package`
 (unless (package-installed-p 'use-package)
-   (package-install 'use-package))
+  (package-refresh-contents)
+  (package-install 'use-package))
 (require 'use-package)
-(setq use-package-always-ensure t)
-(global-display-line-numbers-mode 1)
-(setq display-line-numbers-type 'relative)
 
-(use-package ivy
-  :demand
-  :diminish
-  :bind (("C-s" . swiper)
-         :map ivy-minibuffer-map
-         ("TAB" . ivy-alt-done)	
-         ("C-l" . ivy-alt-done)
-         ("C-j" . ivy-next-line)
-         ("C-k" . ivy-previous-line)
-         :map ivy-switch-buffer-map
-         ("C-k" . ivy-previous-line)
-         ("C-l" . ivy-done)
-         ("C-d" . ivy-switch-buffer-kill)
-         :map ivy-reverse-i-search-map
-         ("C-k" . ivy-previous-line)
-         ("C-d" . ivy-reverse-i-search-kill))
-  :config (ivy-mode))
-
-
-(use-package doom-themes
-  :ensure t
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
-
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
-
-(setq make-backup-files nil)
-(use-package command-log-mode)
-(use-package all-the-icons)
-
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 30)))
-
-(require 'treesit)
-(setq treesit-language-source-alist
-   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-     (cmake "https://github.com/uyha/tree-sitter-cmake")
-     (css "https://github.com/tree-sitter/tree-sitter-css")
-     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-     (go "https://github.com/tree-sitter/tree-sitter-go")
-     (html "https://github.com/tree-sitter/tree-sitter-html")
-     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-     (json "https://github.com/tree-sitter/tree-sitter-json")
-     (make "https://github.com/alemuller/tree-sitter-make")
-     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-     (python "https://github.com/tree-sitter/tree-sitter-python")
-     (rust "https://github.com/tree-sitter/tree-sitter-rust")
-     (toml "https://github.com/tree-sitter/tree-sitter-toml")
-     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
-
-;; SPACE {h,j,k,l}
-(general-def 
-  :prefix "<SPC>"
-  :keymaps 'override
-  :states 'normal
-  "l" #'evil-window-right
-  "h" #'evil-window-left
-  "j" #'evil-window-down
-  "k" #'evil-window-up
-)
-
-(custom-set-variables
- '(initial-frame-alist (quote ((fullscreen . maximized)))))
-
-
-(dolist (mode '(org-mode-hook
-                term-mode-hook
-                eshell-mode-hook
-        ))
-          (add-hook mode (lambda () (display-line-numbers-mode 0))))
-
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-(use-package counsel
-:bind  (("M-x" . counsel-M-x )
-        ("C-x b" . counsel-ibuffer)
-        ("C-x C-f" . counsel-find-file)
-        :map minibuffer-local-map
-        ("C-r" . 'counsel-minibuffer-history)))
-
-(global-set-key (kbd "C-M-j") 'counsel-switch-buffer)
-
-
+;; Evil Mode for Vim keybindings
 (use-package evil
-  :init
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-i-jump nil)
+  :ensure t
   :config
   (evil-mode 1)
- (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  ;; Use visual line motions even outside of visual-line-mode buffers
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  (define-key evil-insert-state-map [escape] 'evil-normal-state))
 
-  (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal))
 
-(use-package evil-collection
-  :after evil
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "K") 'ignore))
+
+;; Tree-sitter for syntax highlighting
+(use-package tree-sitter
+  :ensure t
   :config
-  (evil-collection-init))
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-(put 'dired-find-alternate-file 'disabled nil)
-(use-package hydra)
-(use-package helpful
-  :custom
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
-  :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter
+  :config
+  (dolist (hook '(go-mode-hook
+                  c-mode-hook
+                  c++-mode-hook
+                  js-mode-hook
+                  typescript-mode-hook
+                  html-mode-hook
+                  css-mode-hook
+                  json-mode-hook
+                  yaml-mode-hook
+                  python-mode-hook
+                  sh-mode-hook
+                  rjsx-mode-hook
+                  js2-mode-hook))
+    (add-hook hook #'tree-sitter-mode)
+    (add-hook hook #'tree-sitter-hl-mode)))
+
+;; Theme and font
+(use-package solarized-theme
+  :ensure t
+  :config
+  (load-theme 'solarized-dark t))
+(set-frame-font "Hack Nerd Font Mono Regular-11" nil t)
+
+;; `smex` for improved M-x experience
+(use-package smex
+  :ensure t
+  :bind (("M-x" . smex)
+         ("M-X" . smex-major-mode-commands))
+  :config
+  (smex-initialize))
+
+;; Set up basic editing preferences
+(setq-default indent-tabs-mode nil      ;; Use spaces instead of tabs
+              tab-width 2               ;; Tab width of 2 spaces
+              standard-indent 2)        ;; Standard indent width of 2 spaces
+
+;; Configure line numbers
+(add-hook 'prog-mode-hook (lambda () (setq display-line-numbers-type 'relative))) ;; Relative line numbers for code
+(add-hook 'text-mode-hook (lambda () (setq display-line-numbers-type nil)))        ;; No line numbers for text
+
+;; Configure `ido` for flexible minibuffer completion
+(use-package ido
+  :ensure t
+  :init
+  (ido-mode 1)
+  (ido-everywhere 1))
+
+;; Enable `windmove` for easy window navigation
+(windmove-default-keybindings)
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(iedit multiple-cursors smex tree-sitter-langs solarized-theme projectile helm go-mode evil ag ace-window)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((((class color) (min-colors 89)) (:foreground "#839496" :background "#002b36")))))
+
+;; Optional: Keybinding for `execute-extended-command`
+(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+
+(use-package ag
+  :ensure t
+  :config
+  ;; Optional: Customize `ag` behavior
+  (setq ag-highlight-search t        ;; Highlight matches
+        ag-reuse-buffers t           ;; Use the same search buffer
+        ag-reuse-window t))          ;; Use the same window for results
 (use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom ((projectile-completion-system 'ivy))
-  :bind-keymap
-  ("C-c p" . projectile-command-map)
-  :init
-  ;; NOTE: Set this to the folder where you keep your Git repos!
-  (when (file-directory-p "~/Projects/Code")
-    (setq projectile-project-search-path '("~/Projects/Code")))
-  (setq projectile-switch-project-action #'projectile-dired))
-
-(use-package counsel-projectile
-  :config (counsel-projectile-mode))
-
-(use-package ivy-rich
-  :init
-  (ivy-rich-mode 1))
-(global-set-key (kbd "C-M-f") 'counsel-projectile-rg)
-(use-package magit
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
-(use-package org)
-(use-package typescript-mode
-  :mode "\\.ts\\'"
+  :ensure t
   :config
-  (setq typescript-indent-level 2))
-
-(defun efs/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
-
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1))
-
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :init
-  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
-  :config
-  (lsp-enable-which-key-integration t))
-
-
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (         
-         (typescript-ts-mode . lsp-deferred)
-         (lsp-mode . efs/lsp-mode-setup)
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
-
-
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-doc-position 'bottom))
-
-(use-package lsp-treemacs
-  :after lsp)
-
-(use-package lsp-ivy)
-
-;;(mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist))
-(setq major-mode-remap-alist
- '((yaml-mode . yaml-ts-mode)
-   (bash-mode . bash-ts-mode)
-   (js2-mode . js-ts-mode)
-   (typescript-mode . typescript-ts-mode)
-   (json-mode . json-ts-mode)
-   (css-mode . css-ts-mode)
-   (go-mode . go-ts-mode)
-   (elisp-mode . elisp-ts-mode)
-   (rust-mode . rust-ts-mode)
-   (python-mode . python-ts-mode)))
-
-(use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-         ("<tab>" . company-complete-selection))
-        (:map lsp-mode-map
-         ("<tab>" . company-indent-or-complete-common))
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
+  (setq projectile-indexing-method 'alien   ;; Use external tools like `ag`
+        projectile-generic-command "ag -0 -l --nocolor --hidden"))
+(global-set-key (kbd "C-c p f") 'projectile-find-file)
+(global-set-key (kbd "C-c p s g") 'projectile-ag)
